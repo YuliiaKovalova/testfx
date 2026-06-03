@@ -2,8 +2,8 @@
 name: "Build Failure Analysis"
 description: >-
   Runs `./build.sh --binaryLog` on every PR; when the build fails, delegates
-  to the `build-failure-analyst` agent (which reads JSON dumps produced from
-  the binlog) to identify root causes, post a PR comment summarizing them,
+  to the `build-failure-analyst` agent (which queries a containerized binlog
+  MCP server) to identify root causes, post a PR comment summarizing them,
   and attach inline `suggestion` blocks tied to the diff.
 
 # This workflow is **advisory**, not gating:
@@ -44,7 +44,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BINLOG_MCP_VERSION: '1.0.0-preview.26272.1'
   NUGET_MCP_VERSION: '1.4.3'
 
 timeout-minutes: 30
@@ -59,9 +58,10 @@ imports:
 
 # Deterministic setup that runs before the AI agent starts. By the time the
 # agent boots: dotnet is on PATH, the binlog has been produced (whether the
-# build succeeded or failed), the binlog path and build outcome are exported
-# as `GH_AW_*` env vars, `binlog-mcp` is installed, and the binlog data has
-# been dumped to `/tmp/binlog-data/*.json` files for the agent to `cat`.
+# build succeeded or failed), and the binlog path and build outcome are
+# exported as `GH_AW_*` env vars. The agent reads the binlog through the
+# containerized `binlog` MCP server (see `mcp-servers` below), which is given a
+# read-only mount of the workspace so it can open `GH_AW_BINLOG_PATH` directly.
 #
 # `continue-on-error: true` is essential on the build step: a failed build
 # must not abort the job before the agent gets to analyse it.
@@ -90,40 +90,10 @@ steps:
         echo "found=false" >> "$GITHUB_OUTPUT"
       fi
 
-  - name: Install binlog-mcp
-    if: steps.build.outcome == 'failure' && steps.find-binlog.outputs.found == 'true'
-    run: |
-      mkdir -p /tmp/binlog-tool
-      cat > /tmp/binlog-tool/nuget.config <<'EOF'
-      <?xml version="1.0" encoding="utf-8"?>
-      <configuration>
-        <packageSources>
-          <clear />
-          <add key="dotnet-tools"
-               value="https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json" />
-        </packageSources>
-      </configuration>
-      EOF
-      dotnet tool install --global Microsoft.AITools.BinlogMcp \
-        --configfile /tmp/binlog-tool/nuget.config \
-        --version "$BINLOG_MCP_VERSION"
-      echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
-
   - name: Install NuGet MCP Server
     if: steps.build.outcome == 'failure' && steps.find-binlog.outputs.found == 'true'
     continue-on-error: true
     run: dotnet tool install --global NuGet.Mcp.Server --version "$NUGET_MCP_VERSION"
-
-  - name: Dump binlog as JSON
-    if: steps.build.outcome == 'failure' && steps.find-binlog.outputs.found == 'true'
-    continue-on-error: true
-    env:
-      BINLOG_PATH: ${{ steps.find-binlog.outputs.path }}
-    run: |
-      mkdir -p /tmp/binlog-data
-      timeout 180 dotnet run --project .github/workflows/scripts/DumpBinlog -- \
-        "$BINLOG_PATH" \
-        /tmp/binlog-data
 
   # On `workflow_dispatch` runs, `github.sha` is the SHA of the dispatched ref
   # (usually the default branch), NOT the PR head. Look up the real PR head
@@ -170,6 +140,21 @@ tools:
     - "find"
     - "dotnet"
     - "NuGet.Mcp.Server"
+
+mcp-servers:
+  # Containerized Microsoft.AITools.BinlogMcp (dotnet/dotnet-buildtools-prereqs-docker#1660).
+  # Exposes ~29 binlog inspection tools (binlog_overview, binlog_errors,
+  # binlog_warnings, binlog_diagnose, binlog_search, binlog_task_details, …) to the
+  # analyst agent, replacing the former DumpBinlog JSON shim. The gh-aw MCP gateway
+  # launches it as a stdio container; the workspace is mounted read-only so the
+  # server can open the binlog at `GH_AW_BINLOG_PATH` (an absolute path under the
+  # workspace). The image bundles a pinned tool version, so no `BINLOG_MCP_VERSION`
+  # is needed here.
+  binlog:
+    container: "mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-binlog-mcp-amd64"
+    mounts:
+      - "${{ github.workspace }}:${{ github.workspace }}:ro"
+    allowed: ["*"]
 
 safe-outputs:
   add-comment:

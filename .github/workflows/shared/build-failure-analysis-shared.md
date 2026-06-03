@@ -34,9 +34,10 @@ failed.
    include:
    - All five `GH_AW_*` environment values verbatim so the sub-agent knows
      which binlog metadata to read and where to post.
-   - A reminder that the pre-agent steps already dumped overview / errors /
-     warnings to `/tmp/binlog-data/*.json` and that the sub-agent should
-     start by `cat`ing those files via the `bash` tool.
+   - A reminder that a containerized `binlog` MCP server is available and that
+     the sub-agent should query it (`binlog_overview`, then `binlog_errors` with
+     a `limit`, `binlog_warnings`, and deeper tools as needed) passing the
+     `GH_AW_BINLOG_PATH` value as the `binlog_file` argument.
    - A reminder that the parent workflow `noop`s immediately and that the
      sub-agent itself is responsible for calling `add_comment` (summary) and
      `create_pull_request_review_comment` (inline ```suggestion blocks).
