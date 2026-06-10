@@ -19,7 +19,9 @@ internal sealed class ServiceProvider : IServiceProvider, ICloneable
     public bool AllowTestAdapterFrameworkRegistration { get; set; }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-    private static Type[] InternalOnlyExtensions =>
+    // PERF: static readonly field so the HashSet is allocated once rather than a new Type[] on every access.
+    // HashSet<T>.Contains is O(1) vs O(n) for array-based lookup.
+    private static readonly HashSet<Type> InternalOnlyExtensionTypes =
     [
         // TestHost
         typeof(ITestHostApplicationLifetime),
@@ -102,7 +104,7 @@ internal sealed class ServiceProvider : IServiceProvider, ICloneable
         bool stopAtFirst = false,
         bool skipInternalOnlyExtensions = false)
     {
-        if (skipInternalOnlyExtensions && InternalOnlyExtensions.Contains(serviceType))
+        if (skipInternalOnlyExtensions && InternalOnlyExtensionTypes.Contains(serviceType))
         {
             yield break;
         }
