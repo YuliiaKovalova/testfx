@@ -1,0 +1,30 @@
+{
+  "last_updated": "2026-06-10",
+  "run_count": 1,
+  "last_run_workflow": "https://github.com/YuliiaKovalova/testfx/actions/runs/27310084307",
+  "last_run_tasks": ["task1", "task2", "task3", "task7"],
+
+  "validated_commands": {
+    "build": "./build.sh (Linux) or .\\build.cmd (Windows)",
+    "build_release": "./build.sh -c Release",
+    "unit_tests": "./build.sh -test",
+    "integration_tests": "./build.sh -pack -test -integrationTest",
+    "pack": "./build.sh -pack",
+    "sdk_path": ".dotnet/dotnet",
+    "sdk_version": "11.0.100-preview.5.26227.104",
+    "notes": [
+      "SDK is downloaded by build.sh on first run (~200 MB)",
+      "Integration tests need -pack first (consumes packed NuGets from artifacts/packages/)",
+      "Single test: .dotnet/dotnet run --project <proj> -f net9.0 --no-build -- --filter-uid <uid>",
+      "Single test (MTP): --treenode-filter '/*/*/*/*/ClassName/MethodName'",
+      "launchSettings.json has a JSON parsing quirk that causes a warning but does not affect test execution"
+    ]
+  },
+
+  "backlog_cursor": "after_first_scan",
+
+  "monthly_activity_issue": {
+    "title": "[efficiency-improver] Monthly Activity 2026-06",
+    "month": "2026-06"
+  }
+}
