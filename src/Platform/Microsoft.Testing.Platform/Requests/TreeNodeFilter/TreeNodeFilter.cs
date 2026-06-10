@@ -553,6 +553,59 @@ public sealed class TreeNodeFilter : ITestExecutionFilter
         return true;
     }
 
+#if NETCOREAPP
+    // On .NET Core (net8.0+), dispatch directly to the span-based overload to avoid allocating
+    // a substring for each path segment. Regex.IsMatch(ReadOnlySpan<char>) is available
+    // since .NET 7 and eliminates one heap allocation per filter segment per test node.
+    private static bool MatchFilterPattern(
+        FilterExpression filterExpression,
+        string testNodeFullPath,
+        int startFragmentIndex,
+        int endFragmentIndex,
+        PropertyBag properties)
+        => MatchFilterPattern(filterExpression, testNodeFullPath.AsSpan(startFragmentIndex, endFragmentIndex - startFragmentIndex), properties);
+
+    private static bool MatchFilterPattern(
+        FilterExpression filterExpression,
+        ReadOnlySpan<char> testNodeFragment,
+        PropertyBag properties)
+    {
+        switch (filterExpression)
+        {
+            case ValueExpression vExpr:
+                return vExpr.Regex.IsMatch(testNodeFragment);
+            case OperatorExpression { Op: FilterOperator.Or, SubExpressions: var subexprs }:
+                for (int i = 0; i < subexprs.Count; i++)
+                {
+                    if (MatchFilterPattern(subexprs[i], testNodeFragment, properties))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            case OperatorExpression { Op: FilterOperator.And, SubExpressions: var subexprs }:
+                for (int i = 0; i < subexprs.Count; i++)
+                {
+                    if (!MatchFilterPattern(subexprs[i], testNodeFragment, properties))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            case OperatorExpression { Op: FilterOperator.Not, SubExpressions: [var singleSubExpr] }:
+                return !MatchFilterPattern(singleSubExpr, testNodeFragment, properties);
+            case ValueAndPropertyExpression { Value: var valueExpr, Properties: var propExpr }:
+                return MatchFilterPattern(valueExpr, testNodeFragment, properties)
+                    && MatchProperties(propExpr, properties);
+            case NopExpression:
+                return true;
+            default:
+                throw ApplicationStateGuard.Unreachable();
+        }
+    }
+#else
     private static bool MatchFilterPattern(
         FilterExpression filterExpression,
         string testNodeFullPath,
@@ -604,6 +657,7 @@ public sealed class TreeNodeFilter : ITestExecutionFilter
                 throw ApplicationStateGuard.Unreachable();
         }
     }
+#endif
 
     private static bool MatchProperties(
         FilterExpression propertyExpr,
