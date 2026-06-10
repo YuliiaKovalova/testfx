@@ -95,7 +95,7 @@ public class TrxTestResultExtractorTests
         // The suffix starts with '\n', which is not a low surrogate, so we just check the last char of the prefix.
         string truncated = result.ExceptionMessage;
         int suffixStart = truncated.IndexOf("\n... [truncated", StringComparison.Ordinal);
-        Assert.IsGreaterThan(0, suffixStart);
+        Assert.IsPositive(suffixStart);
         char lastPrefixChar = truncated[suffixStart - 1];
         Assert.IsFalse(char.IsHighSurrogate(lastPrefixChar), "Truncation must not leave a dangling high surrogate.");
     }
