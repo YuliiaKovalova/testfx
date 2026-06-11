@@ -1,34 +1,35 @@
 {
-  "last_updated": "2026-06-10T23:30:00Z",
-  "last_run_tasks": ["task1", "task2", "task3", "task7"],
+  "last_updated": "2026-06-11T23:35:00Z",
+  "last_run_tasks": ["task4", "task5", "task3", "task7"],
   "task_last_run": {
     "task1": "2026-06-10",
     "task2": "2026-06-10",
-    "task3": "2026-06-10",
-    "task4": null,
-    "task5": null,
+    "task3": "2026-06-11",
+    "task4": "2026-06-11",
+    "task5": "2026-06-11",
     "task6": null,
-    "task7": "2026-06-10"
+    "task7": "2026-06-11"
   },
   "commands": {
     "build": "./build.sh",
     "test_unit": "./build.sh -test",
     "test_full": "./build.sh -pack -test -integrationTest",
     "pack": "./build.sh -pack",
-    "single_test_mtp": "dotnet run --project <test-project> -f net8.0 --no-build -- --treenode-filter '/*/*/*/ClassName/Method'",
-    "single_test_uid": "dotnet run --project <test-project> -f net8.0 --no-build -- --filter-uid <TestUid>",
+    "single_test_filter": ".dotnet/dotnet run --project <test-project> -f net8.0 --no-build -- --filter 'ClassName'",
     "notes": "Requires .NET SDK 11.0.100-preview.5.26227.104; bootstrap by running ./build.sh first"
   },
   "testing_notes": {
     "frameworks": {
-      "TestFramework.UnitTests": "internal TestContainer framework (any public parameterless method = test) + AwesomeAssertions",
       "Microsoft.Testing.Platform.UnitTests": "MSTest ([TestClass]/[TestMethod]) + MSTest Assert (AwesomeAssertions BANNED per BannedSymbols.txt)",
-      "MSTest.Analyzers.UnitTests": "MSTest + MSTest Assert (no AwesomeAssertions)"
+      "MSTest.Analyzers.UnitTests": "MSTest + MSTest Assert (no AwesomeAssertions)",
+      "MSTestAdapter.UnitTests": "AwesomeAssertions required (MSTest Assert BANNED)"
     },
-    "service_provider": "Use concrete ServiceProvider class (not Mock<IServiceProvider>) — GetRequiredServiceInternal<T> casts internally. AddService(obj) for registration.",
+    "stylecop_rules": "SA1512: no blank line after single-line comments. SA1025: no multiple consecutive spaces. Applies to test files.",
+    "service_provider": "Use concrete ServiceProvider class — AddService(obj) for registration",
     "implicit_usings": "Enabled in all projects — System, System.Linq, System.Globalization etc. auto-included",
-    "experimental_attribute": "IGracefulStopTestExecutionCapability has [Experimental(\"TPEXP\")] — use #pragma warning disable TPEXP",
-    "configureawait": "CA2007 is a warning — always add .ConfigureAwait(false) to awaited calls in test projects"
+    "configureawait": "CA2007 — always add .ConfigureAwait(false) to awaited calls in test projects",
+    "internal_access": "InternalsVisibleTo includes Microsoft.Testing.Platform.UnitTests — internal classes like LLMEnvironmentDetector are accessible",
+    "moq_usage": "Mock<IEnvironment> is the standard pattern for environment mocking in tests"
   },
   "maintainer_priorities": "No specific priorities communicated yet",
   "repo_constraints": [
@@ -36,11 +37,11 @@
   ],
   "backlog": [
     {
-      "id": "max-failed-tests-provider",
-      "title": "Unit tests for MaxFailedTestsCommandLineOptionsProvider",
+      "id": "llm-env-detector",
+      "title": "Unit tests for LLMEnvironmentDetector",
       "status": "PR submitted",
-      "pr_branch": "test-assist/max-failed-tests-provider-tests",
-      "notes": "PR created 2026-06-10. Tests cover invalid args, capability checks, GetCommandLineOptions."
+      "pr_branch": "test-assist/llm-env-detector-tests",
+      "notes": "PR created 2026-06-11. 45 tests covering IsLLMEnvironment() for all 3 rule types and all agent env vars."
     },
     {
       "id": "telemetry-collector",
@@ -53,21 +54,27 @@
       "title": "C# edge case tests for analyzer projects",
       "status": "identified",
       "notes": "Good overall coverage already. Could add boundary cases."
+    },
+    {
+      "id": "testhostcontrollers",
+      "title": "Tests for TestHostControllersManager",
+      "status": "identified",
+      "notes": "288-line complex class with only one test file (TestConfigurationEnvironmentVariableProviderTests.cs). Good candidate."
     }
   ],
   "work_in_progress": null,
   "completed": [
     {
-      "run_id": "27312599420",
-      "date": "2026-06-10",
-      "tasks": ["task1", "task2", "task3", "task7"],
-      "pr_branch": "test-assist/max-failed-tests-provider-tests",
-      "summary": "Added 9 unit tests for MaxFailedTestsCommandLineOptionsProvider validation logic"
+      "run_id": "27383669398",
+      "date": "2026-06-11",
+      "tasks": ["task4", "task5", "task3", "task7"],
+      "pr_branch": "test-assist/llm-env-detector-tests",
+      "summary": "Added 45 unit tests for LLMEnvironmentDetector covering all rule types and agent env vars"
     }
   ],
   "monthly_activity_issue": {
     "title": "[test-improver] Monthly Activity 2026-06",
     "month": "2026-06",
-    "status": "created"
+    "status": "pending creation"
   }
 }
