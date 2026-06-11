@@ -1,20 +1,20 @@
 # Efficiency Improver Backlog — YuliiaKovalova/testfx
 
-Last updated: 2026-06-10
+Last updated: 2026-06-11
 
 ## Completed
 
-| Date | PR | Description |
+| Date | PR/Branch | Description |
 |---|---|---|
-| 2026-06-10 | `efficiency/treenodefilter-span-match` | Eliminate per-segment substring allocation in TreeNodeFilter on .NET — uses `ReadOnlySpan<char>` + `Regex.IsMatch(span)` under `#if NETCOREAPP` |
+| 2026-06-11 | `efficiency/named-pipe-stackalloc-header` | `NamedPipeBase.cs` — replace two `ArrayPool<byte>.Rent(4)`/Return blocks with single 8-byte `stackalloc` + `MemoryStream.Write(Span<byte>)` for IPC message headers |
 
 ## Pending
 
-### MEDIUM priority
+### LOW priority
 
 | # | File | Issue | Measurement strategy |
 |---|---|---|---|
-| 1 | `NamedPipeBase.cs` lines 44-130 | `ArrayPool<byte>.Rent(4)` for tiny writes to MemoryStream (always sync) — overhead > benefit for 4-byte ints | Replace with a sync helper using `stackalloc` or inline int-to-byte writes |
+| 1 | No benchmark suite | Add IPC microbenchmarks to measure per-message throughput | Enables quantitative energy evidence for future improvements |
 
 ### LOW priority / Already reviewed
 
@@ -27,8 +27,7 @@ Last updated: 2026-06-10
 
 ## Notes on Codebase
 
-- Preprocessor convention: `#if NETCOREAPP` = net8.0+net9.0; `#if NET8_0_OR_GREATER` for net8+ APIs. NO bare `#if NET`.
+- Preprocessor convention: `#if NET` = net8.0/net9.0; `#if NET8_0_OR_GREATER` for net8+ APIs. NO bare `#if NETCOREAPP`.
 - `PropertyBag` uses `GetStructEnumerator()` to avoid boxing — do not add LINQ calls.
-- `ValueExpression.Regex` is `Compiled` — `IsMatch(ReadOnlySpan<char>)` is fully supported.
-- `TreeNodeFilter` is marked `[Experimental("TPEXP")]` but is widely used in CI.
 - No benchmarks exist in the repo — all measurement is allocation-count proxy or wall-clock timing.
+- `NamedPipeBase` now uses `stackalloc` for 8-byte header; `BitConverter.TryWriteBytes(Span, int)` available in `#if NET` (net8.0+).

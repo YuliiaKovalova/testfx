@@ -1,8 +1,8 @@
 {
-  "last_updated": "2026-06-10",
-  "run_count": 1,
-  "last_run_workflow": "https://github.com/YuliiaKovalova/testfx/actions/runs/27310084307",
-  "last_run_tasks": ["task1", "task2", "task3", "task7"],
+  "last_updated": "2026-06-11",
+  "run_count": 2,
+  "last_run_workflow": "https://github.com/YuliiaKovalova/testfx/actions/runs/27380983553",
+  "last_run_tasks": ["task3", "task7"],
 
   "validated_commands": {
     "build": "./build.sh (Linux) or .\\build.cmd (Windows)",
@@ -15,16 +15,26 @@
     "notes": [
       "SDK is downloaded by build.sh on first run (~200 MB)",
       "Integration tests need -pack first (consumes packed NuGets from artifacts/packages/)",
-      "Single test: .dotnet/dotnet run --project <proj> -f net9.0 --no-build -- --filter-uid <uid>",
+      "Single test: .dotnet/dotnet run --project <proj> -f net8.0 --no-build -- --filter-uid <uid>",
       "Single test (MTP): --treenode-filter '/*/*/*/*/ClassName/MethodName'",
       "launchSettings.json has a JSON parsing quirk that causes a warning but does not affect test execution"
     ]
   },
 
-  "backlog_cursor": "after_first_scan",
+  "backlog_cursor": "after_second_scan",
 
   "monthly_activity_issue": {
     "title": "[efficiency-improver] Monthly Activity 2026-06",
-    "month": "2026-06"
-  }
+    "month": "2026-06",
+    "created": "2026-06-11"
+  },
+
+  "open_prs": [
+    {
+      "branch": "efficiency/named-pipe-stackalloc-header",
+      "description": "Replace ArrayPool with stackalloc for 4-byte IPC message headers",
+      "status": "draft",
+      "created": "2026-06-11"
+    }
+  ]
 }
