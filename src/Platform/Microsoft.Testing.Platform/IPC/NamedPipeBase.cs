@@ -1,16 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if NET
-using System.Buffers;
-#endif
-
 using System.IO.Pipes;
 
 using Microsoft.CodeAnalysis;
-#if NET
-using Microsoft.Testing.Platform.Helpers;
-#endif
 
 namespace Microsoft.Testing.Platform.IPC;
 
@@ -59,51 +52,24 @@ internal abstract class NamedPipeBase
 
         try
         {
-            // Write the message size header
 #if NET
-            byte[] bytes = ArrayPool<byte>.Shared.Rent(sizeof(int));
-            try
-            {
-                if (!BitConverter.TryWriteBytes(bytes, sizeOfTheWholeMessage))
-                {
-                    // TryWriteBytes only fails if destination is too small; we rented at least sizeof(int).
-                    throw ApplicationStateGuard.Unreachable();
-                }
-
-                await _messageBuffer.WriteAsync(bytes.AsMemory(0, sizeof(int)), cancellationToken).ConfigureAwait(false);
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(bytes);
-            }
-#else
-            await _messageBuffer.WriteAsync(BitConverter.GetBytes(sizeOfTheWholeMessage), 0, sizeof(int), cancellationToken).ConfigureAwait(false);
-#endif
-
-            // Write the serializer ID
-#if NET
-            bytes = ArrayPool<byte>.Shared.Rent(sizeof(int));
-            try
-            {
-                if (!BitConverter.TryWriteBytes(bytes, serializer.Id))
-                {
-                    throw ApplicationStateGuard.Unreachable();
-                }
-
-                await _messageBuffer.WriteAsync(bytes.AsMemory(0, sizeof(int)), cancellationToken).ConfigureAwait(false);
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(bytes);
-            }
-#else
-            await _messageBuffer.WriteAsync(BitConverter.GetBytes(serializer.Id), 0, sizeof(int), cancellationToken).ConfigureAwait(false);
-#endif
+            // MemoryStream.Write is always synchronous — use stackalloc to avoid two
+            // ArrayPool.Rent/Return round-trips (pool lock + bucket lookup) per message.
+            Span<byte> headers = stackalloc byte[sizeof(int) * 2];
+            BitConverter.TryWriteBytes(headers, sizeOfTheWholeMessage);
+            BitConverter.TryWriteBytes(headers.Slice(sizeof(int)), serializer.Id);
+            _messageBuffer.Write(headers);
 
             // Write the serialized payload
-#if NET
             await _messageBuffer.WriteAsync(_serializationBuffer.GetBuffer().AsMemory(0, (int)_serializationBuffer.Position), cancellationToken).ConfigureAwait(false);
 #else
+            // Write the message size header
+            await _messageBuffer.WriteAsync(BitConverter.GetBytes(sizeOfTheWholeMessage), 0, sizeof(int), cancellationToken).ConfigureAwait(false);
+
+            // Write the serializer ID
+            await _messageBuffer.WriteAsync(BitConverter.GetBytes(serializer.Id), 0, sizeof(int), cancellationToken).ConfigureAwait(false);
+
+            // Write the serialized payload
             await _messageBuffer.WriteAsync(_serializationBuffer.GetBuffer(), 0, (int)_serializationBuffer.Position, cancellationToken).ConfigureAwait(false);
 #endif
 
