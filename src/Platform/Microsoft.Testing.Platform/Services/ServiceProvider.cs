@@ -19,7 +19,7 @@ internal sealed class ServiceProvider : IServiceProvider, ICloneable
     public bool AllowTestAdapterFrameworkRegistration { get; set; }
 
 #pragma warning disable CS0618 // Type or member is obsolete
-    private static Type[] InternalOnlyExtensions =>
+    private static readonly HashSet<Type> InternalOnlyExtensionTypes =
     [
         // TestHost
         typeof(ITestHostApplicationLifetime),
@@ -102,7 +102,7 @@ internal sealed class ServiceProvider : IServiceProvider, ICloneable
         bool stopAtFirst = false,
         bool skipInternalOnlyExtensions = false)
     {
-        if (skipInternalOnlyExtensions && InternalOnlyExtensions.Contains(serviceType))
+        if (skipInternalOnlyExtensions && InternalOnlyExtensionTypes.Contains(serviceType))
         {
             yield break;
         }
@@ -121,7 +121,22 @@ internal sealed class ServiceProvider : IServiceProvider, ICloneable
     }
 
     public object? GetServiceInternal(Type serviceType, bool skipInternalOnlyExtensions = false)
-        => GetServicesInternal(serviceType, stopAtFirst: true, skipInternalOnlyExtensions).FirstOrDefault();
+    {
+        if (skipInternalOnlyExtensions && InternalOnlyExtensionTypes.Contains(serviceType))
+        {
+            return null;
+        }
+
+        foreach (object serviceInstance in _services)
+        {
+            if (serviceType.IsInstanceOfType(serviceInstance))
+            {
+                return serviceInstance;
+            }
+        }
+
+        return null;
+    }
 
     public object Clone(Func<object, bool> filter)
     {
