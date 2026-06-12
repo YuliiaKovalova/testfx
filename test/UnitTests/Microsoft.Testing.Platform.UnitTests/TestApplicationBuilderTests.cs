@@ -189,6 +189,115 @@ public sealed class TestApplicationBuilderTests
         Assert.AreEqual(CompositeExtensionFactory<InvalidComposition>.ValidateCompositionErrorMessage, invalidOperationException.Message);
     }
 
+    [TestMethod]
+    public void AddEnvironmentVariableProvider_NullFactory_ThrowsArgumentNullException()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
+            testHostControllerManager.AddEnvironmentVariableProvider(
+                (Func<IServiceProvider, ITestHostEnvironmentVariableProvider>)null!));
+    }
+
+    [TestMethod]
+    public void AddEnvironmentVariableProvider_NullCompositeFactory_ThrowsArgumentNullException()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
+            testHostControllerManager.AddEnvironmentVariableProvider(
+                (CompositeExtensionFactory<TestHostEnvironmentVariableProvider>)null!));
+    }
+
+    [TestMethod]
+    public void AddEnvironmentVariableProvider_SameCompositeFactory_ThrowsArgumentException()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        CompositeExtensionFactory<TestHostEnvironmentVariableProvider> factory = new(() => new TestHostEnvironmentVariableProvider("id"));
+        testHostControllerManager.AddEnvironmentVariableProvider(factory);
+        Assert.ThrowsExactly<ArgumentException>(() => testHostControllerManager.AddEnvironmentVariableProvider(factory));
+    }
+
+    [TestMethod]
+    public void AddProcessLifetimeHandler_NullFactory_ThrowsArgumentNullException()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
+            testHostControllerManager.AddProcessLifetimeHandler(
+                (Func<IServiceProvider, ITestHostProcessLifetimeHandler>)null!));
+    }
+
+    [TestMethod]
+    public void AddProcessLifetimeHandler_NullCompositeFactory_ThrowsArgumentNullException()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
+            testHostControllerManager.AddProcessLifetimeHandler(
+                (CompositeExtensionFactory<TestHostProcessLifetimeHandler>)null!));
+    }
+
+    [TestMethod]
+    public void AddProcessLifetimeHandler_SameCompositeFactory_ThrowsArgumentException()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        CompositeExtensionFactory<TestHostProcessLifetimeHandler> factory = new(() => new TestHostProcessLifetimeHandler("id"));
+        testHostControllerManager.AddProcessLifetimeHandler(factory);
+        Assert.ThrowsExactly<ArgumentException>(() => testHostControllerManager.AddProcessLifetimeHandler(factory));
+    }
+
+    [TestMethod]
+    public void AddDataConsumerToTestHostControllers_NullCompositeFactory_ThrowsArgumentNullException()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
+            testHostControllerManager.AddDataConsumer((CompositeExtensionFactory<Consumer>)null!));
+    }
+
+    [TestMethod]
+    public void AddDataConsumerToTestHostControllers_SameCompositeFactory_ThrowsArgumentException()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        CompositeExtensionFactory<Consumer> factory = new(() => new Consumer("id"));
+        testHostControllerManager.AddDataConsumer(factory);
+        Assert.ThrowsExactly<ArgumentException>(() => testHostControllerManager.AddDataConsumer(factory));
+    }
+
+    [TestMethod]
+    public async Task BuildAsync_DisabledEnvironmentVariableProvider_NotIncludedNoProcessRestart()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        testHostControllerManager.AddEnvironmentVariableProvider(_ => new DisabledTestHostEnvironmentVariableProvider("disabled"));
+
+        TestHostControllerConfiguration configuration = await testHostControllerManager.BuildAsync(_serviceProvider);
+
+        Assert.HasCount(0, configuration.EnvironmentVariableProviders);
+        Assert.IsFalse(configuration.RequireProcessRestart);
+    }
+
+    [TestMethod]
+    public async Task BuildAsync_DisabledLifetimeHandler_NotIncludedNoProcessRestart()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        testHostControllerManager.AddProcessLifetimeHandler(_ => new DisabledTestHostProcessLifetimeHandler("disabled"));
+
+        TestHostControllerConfiguration configuration = await testHostControllerManager.BuildAsync(_serviceProvider);
+
+        Assert.HasCount(0, configuration.LifetimeHandlers);
+        Assert.IsFalse(configuration.RequireProcessRestart);
+    }
+
+    [TestMethod]
+    public async Task BuildAsync_DataConsumerCompositeFactory_IncludedRequiresProcessRestart()
+    {
+        TestHostControllersManager testHostControllerManager = new();
+        CompositeExtensionFactory<Consumer> factory = new(() => new Consumer("consumerId"));
+        testHostControllerManager.AddDataConsumer(factory);
+
+        TestHostControllerConfiguration configuration = await testHostControllerManager.BuildAsync(_serviceProvider);
+
+        Assert.HasCount(1, configuration.DataConsumer);
+        Assert.AreEqual("consumerId", configuration.DataConsumer[0].Uid);
+        Assert.IsTrue(configuration.RequireProcessRestart);
+    }
+
     [SuppressMessage("Design", "TA0001:Extension should not implement cross-functional areas", Justification = "Done on purpose for testing error")]
     private sealed class InvalidComposition : ITestHostProcessLifetimeHandler, ITestSessionLifetimeHandler
     {
@@ -376,5 +485,45 @@ public sealed class TestApplicationBuilderTests
         public Task BeforeRunAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
         public Task<bool> IsEnabledAsync() => Task.FromResult(true);
+    }
+
+    private sealed class DisabledTestHostEnvironmentVariableProvider : ITestHostEnvironmentVariableProvider
+    {
+        public DisabledTestHostEnvironmentVariableProvider(string id) => Uid = id;
+
+        public string Uid { get; }
+
+        public string Version => nameof(DisabledTestHostEnvironmentVariableProvider);
+
+        public string DisplayName => nameof(DisabledTestHostEnvironmentVariableProvider);
+
+        public string Description => nameof(DisabledTestHostEnvironmentVariableProvider);
+
+        public Task<bool> IsEnabledAsync() => Task.FromResult(false);
+
+        public Task UpdateAsync(IEnvironmentVariables environmentVariables) => throw new NotImplementedException();
+
+        public Task<ValidationResult> ValidateTestHostEnvironmentVariablesAsync(IReadOnlyEnvironmentVariables environmentVariables) => throw new NotImplementedException();
+    }
+
+    private sealed class DisabledTestHostProcessLifetimeHandler : ITestHostProcessLifetimeHandler
+    {
+        public DisabledTestHostProcessLifetimeHandler(string id) => Uid = id;
+
+        public string Uid { get; }
+
+        public string Version => nameof(DisabledTestHostProcessLifetimeHandler);
+
+        public string DisplayName => nameof(DisabledTestHostProcessLifetimeHandler);
+
+        public string Description => nameof(DisabledTestHostProcessLifetimeHandler);
+
+        public Task<bool> IsEnabledAsync() => Task.FromResult(false);
+
+        public Task BeforeTestHostProcessStartAsync(CancellationToken cancellationToken) => throw new NotImplementedException();
+
+        public Task OnTestHostProcessStartedAsync(ITestHostProcessInformation testHostProcessInformation, CancellationToken cancellationToken) => throw new NotImplementedException();
+
+        public Task OnTestHostProcessExitedAsync(ITestHostProcessInformation testHostProcessInformation, CancellationToken cancellationToken) => throw new NotImplementedException();
     }
 }
