@@ -1,14 +1,14 @@
 {
-  "last_updated": "2026-06-11T23:35:00Z",
-  "last_run_tasks": ["task4", "task5", "task3", "task7"],
+  "last_updated": "2026-06-12T23:17:00Z",
+  "last_run_tasks": ["task3", "task6", "task7"],
   "task_last_run": {
     "task1": "2026-06-10",
     "task2": "2026-06-10",
-    "task3": "2026-06-11",
+    "task3": "2026-06-12",
     "task4": "2026-06-11",
     "task5": "2026-06-11",
-    "task6": null,
-    "task7": "2026-06-11"
+    "task6": "2026-06-12",
+    "task7": "2026-06-12"
   },
   "commands": {
     "build": "./build.sh",
@@ -27,9 +27,10 @@
     "stylecop_rules": "SA1512: no blank line after single-line comments. SA1025: no multiple consecutive spaces. Applies to test files.",
     "service_provider": "Use concrete ServiceProvider class — AddService(obj) for registration",
     "implicit_usings": "Enabled in all projects — System, System.Linq, System.Globalization etc. auto-included",
-    "configureawait": "CA2007 — always add .ConfigureAwait(false) to awaited calls in test projects",
+    "configureawait": "CA2007 is set to 'none' in test/.editorconfig — ConfigureAwait(false) is NOT required in tests",
     "internal_access": "InternalsVisibleTo includes Microsoft.Testing.Platform.UnitTests — internal classes like LLMEnvironmentDetector are accessible",
-    "moq_usage": "Mock<IEnvironment> is the standard pattern for environment mocking in tests"
+    "moq_usage": "Mock<IEnvironment> is the standard pattern for environment mocking in tests",
+    "global_usings_test": "test/Directory.Build.targets adds global usings for Microsoft.Testing.Platform.Builder, Microsoft.Testing.Platform.Extensions, Microsoft.VisualStudio.TestTools.UnitTesting, Microsoft.Testing.TestInfrastructure — so CompositeExtensionFactory<T> and ValidationResult are available without explicit using"
   },
   "maintainer_priorities": "No specific priorities communicated yet",
   "repo_constraints": [
@@ -39,9 +40,15 @@
     {
       "id": "llm-env-detector",
       "title": "Unit tests for LLMEnvironmentDetector",
+      "status": "closed",
+      "notes": "PR was created 2026-06-11 but appears closed/not present in fork. Likely completed or no longer needed."
+    },
+    {
+      "id": "testhostcontrollers-manager",
+      "title": "Additional TestHostControllersManager tests",
       "status": "PR submitted",
-      "pr_branch": "test-assist/llm-env-detector-tests",
-      "notes": "PR created 2026-06-11. 45 tests covering IsLLMEnvironment() for all 3 rule types and all agent env vars."
+      "pr_branch": "test-assist/test-host-controllers-manager-tests",
+      "notes": "PR created 2026-06-12. 11 tests covering null guards, disabled providers, and AddDataConsumer."
     },
     {
       "id": "telemetry-collector",
@@ -54,27 +61,21 @@
       "title": "C# edge case tests for analyzer projects",
       "status": "identified",
       "notes": "Good overall coverage already. Could add boundary cases."
-    },
-    {
-      "id": "testhostcontrollers",
-      "title": "Tests for TestHostControllersManager",
-      "status": "identified",
-      "notes": "288-line complex class with only one test file (TestConfigurationEnvironmentVariableProviderTests.cs). Good candidate."
     }
   ],
   "work_in_progress": null,
   "completed": [
     {
-      "run_id": "27383669398",
-      "date": "2026-06-11",
-      "tasks": ["task4", "task5", "task3", "task7"],
-      "pr_branch": "test-assist/llm-env-detector-tests",
-      "summary": "Added 45 unit tests for LLMEnvironmentDetector covering all rule types and agent env vars"
+      "run_id": "27448509300",
+      "date": "2026-06-12",
+      "tasks": ["task3", "task6", "task7"],
+      "pr_branch": "test-assist/test-host-controllers-manager-tests",
+      "summary": "Added 11 tests for TestHostControllersManager: null guards, disabled providers, AddDataConsumer coverage"
     }
   ],
   "monthly_activity_issue": {
     "title": "[test-improver] Monthly Activity 2026-06",
     "month": "2026-06",
-    "status": "pending creation"
+    "status": "to_create"
   }
 }
