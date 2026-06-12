@@ -1,7 +1,7 @@
 {
-  "last_updated": "2026-06-11",
-  "run_count": 2,
-  "last_run_workflow": "https://github.com/YuliiaKovalova/testfx/actions/runs/27380983553",
+  "last_updated": "2026-06-12",
+  "run_count": 3,
+  "last_run_workflow": "https://github.com/YuliiaKovalova/testfx/actions/runs/27445956181",
   "last_run_tasks": ["task3", "task7"],
 
   "validated_commands": {
@@ -10,31 +10,33 @@
     "unit_tests": "./build.sh -test",
     "integration_tests": "./build.sh -pack -test -integrationTest",
     "pack": "./build.sh -pack",
-    "sdk_path": ".dotnet/dotnet",
+    "sdk_path": ".dotnet/dotnet (downloaded by build.sh on first run)",
     "sdk_version": "11.0.100-preview.5.26227.104",
     "notes": [
-      "SDK is downloaded by build.sh on first run (~200 MB)",
+      "SDK is downloaded by build.sh on first run (~200 MB); not present in CI runner",
       "Integration tests need -pack first (consumes packed NuGets from artifacts/packages/)",
       "Single test: .dotnet/dotnet run --project <proj> -f net8.0 --no-build -- --filter-uid <uid>",
       "Single test (MTP): --treenode-filter '/*/*/*/*/ClassName/MethodName'",
-      "launchSettings.json has a JSON parsing quirk that causes a warning but does not affect test execution"
+      "launchSettings.json has a JSON parsing quirk that causes a warning but does not affect test execution",
+      "System dotnet (8.0/9.0/10.0) available at /usr/share/dotnet/ for syntax verification in isolated projects"
     ]
   },
 
-  "backlog_cursor": "after_second_scan",
+  "backlog_cursor": "after_third_scan",
 
   "monthly_activity_issue": {
     "title": "[efficiency-improver] Monthly Activity 2026-06",
     "month": "2026-06",
-    "created": "2026-06-11"
+    "created": "2026-06-12",
+    "note": "Needs to be created — no open issues found in repo"
   },
 
   "open_prs": [
     {
-      "branch": "efficiency/named-pipe-stackalloc-header",
-      "description": "Replace ArrayPool with stackalloc for 4-byte IPC message headers",
+      "branch": "efficiency/ipc-stackalloc-header",
+      "description": "Eliminate async MemoryStream writes and ArrayPool rent/return in NamedPipeBase",
       "status": "draft",
-      "created": "2026-06-11"
+      "created": "2026-06-12"
     }
   ]
 }
