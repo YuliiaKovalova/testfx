@@ -1,42 +1,28 @@
 {
-  "last_updated": "2026-06-12",
-  "run_count": 3,
-  "last_run_workflow": "https://github.com/YuliiaKovalova/testfx/actions/runs/27445956181",
-  "last_run_tasks": ["task3", "task7"],
-
+  "run_count": 4,
+  "last_run_date": "2026-06-13",
+  "last_run_tasks": ["task2", "task3", "task7"],
   "validated_commands": {
-    "build": "./build.sh (Linux) or .\\build.cmd (Windows)",
+    "build_debug": "./build.sh -c Debug",
     "build_release": "./build.sh -c Release",
-    "unit_tests": "./build.sh -test",
-    "integration_tests": "./build.sh -pack -test -integrationTest",
-    "pack": "./build.sh -pack",
-    "sdk_path": ".dotnet/dotnet (downloaded by build.sh on first run)",
-    "sdk_version": "11.0.100-preview.5.26227.104",
-    "notes": [
-      "SDK is downloaded by build.sh on first run (~200 MB); not present in CI runner",
-      "Integration tests need -pack first (consumes packed NuGets from artifacts/packages/)",
-      "Single test: .dotnet/dotnet run --project <proj> -f net8.0 --no-build -- --filter-uid <uid>",
-      "Single test (MTP): --treenode-filter '/*/*/*/*/ClassName/MethodName'",
-      "launchSettings.json has a JSON parsing quirk that causes a warning but does not affect test execution",
-      "System dotnet (8.0/9.0/10.0) available at /usr/share/dotnet/ for syntax verification in isolated projects"
-    ]
+    "test_unit": "./build.sh -test",
+    "test_extensions": ".dotnet/dotnet test test/UnitTests/Microsoft.Testing.Extensions.UnitTests -f net8.0 --no-build -c Debug",
+    "pack_integration": "./build.sh -pack -test -integrationTest",
+    "notes": "First run downloads SDK 11.x (~200MB) to .dotnet/; takes ~4min. System dotnet is 8/9/10.x only."
   },
-
-  "backlog_cursor": "after_third_scan",
-
-  "monthly_activity_issue": {
-    "title": "[efficiency-improver] Monthly Activity 2026-06",
-    "month": "2026-06",
-    "created": "2026-06-12",
-    "note": "Needs to be created — no open issues found in repo"
-  },
-
   "open_prs": [
     {
-      "branch": "efficiency/ipc-stackalloc-header",
-      "description": "Eliminate async MemoryStream writes and ArrayPool rent/return in NamedPipeBase",
-      "status": "draft",
-      "created": "2026-06-12"
+      "branch": "efficiency/single-pass-propertybag-htmljunit",
+      "title": "[efficiency-improver] perf: single-pass PropertyBag walk in HtmlReport and JUnitReport TestResultCapture",
+      "status": "created_run4",
+      "created": "2026-06-13"
     }
-  ]
+  ],
+  "monthly_issue": {
+    "title": "[efficiency-improver] Monthly Activity 2026-06",
+    "month": "2026-06",
+    "status": "created_run4"
+  },
+  "backlog_cursor": "after_fourth_scan",
+  "checked_off_by_maintainer": []
 }
