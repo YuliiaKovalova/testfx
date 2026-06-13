@@ -102,11 +102,11 @@ internal partial class TestMethodInfo
                 }
 
                 // TODO remove dry violation with TestMethodRunner
-                bool setTestContextSucessful = false;
+                bool setTestContextSuccessful = false;
                 if (_executionContext is null)
                 {
                     _classInstance = CreateTestClassInstance();
-                    setTestContextSucessful = _classInstance != null && SetTestContext(_classInstance, result);
+                    setTestContextSuccessful = _classInstance != null && SetTestContext(_classInstance, result);
                 }
                 else
                 {
@@ -120,7 +120,7 @@ internal partial class TestMethodInfo
                         try
                         {
                             _classInstance = CreateTestClassInstance();
-                            setTestContextSucessful = _classInstance != null && SetTestContext(_classInstance, result);
+                            setTestContextSuccessful = _classInstance != null && SetTestContext(_classInstance, result);
                         }
                         finally
                         {
@@ -132,7 +132,7 @@ internal partial class TestMethodInfo
                     });
                 }
 
-                if (setTestContextSucessful)
+                if (setTestContextSuccessful)
                 {
                     // For any failure after this point, we must run TestCleanup
                     _isTestContextSet = true;
