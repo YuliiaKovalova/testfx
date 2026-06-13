@@ -46,10 +46,46 @@ internal static class TestResultCapture
 
         string outcome = ClassifyOutcome(state);
 
-        TimingProperty? timing = node.Properties.SingleOrDefault<TimingProperty>();
+        // Single-pass collection of all non-state properties: replaces 4 × SingleOrDefault<T>()
+        // + 1 × foreach (5 separate linked-list walks) with one GetStructEnumerator() walk.
+        // Also avoids boxing the struct enumerator that the foreach would incur via GetEnumerator().
+        TimingProperty? timing = null;
+        TestMethodIdentifierProperty? methodId = null;
+        StandardOutputProperty? stdoutProp = null;
+        StandardErrorProperty? stderrProp = null;
+        List<KeyValuePair<string, string>>? traits = null;
+
+        PropertyBag.PropertyBagEnumerator enumerator = node.Properties.GetStructEnumerator();
+        while (enumerator.MoveNext())
+        {
+            switch (enumerator.Current)
+            {
+                case TimingProperty t: timing = t; break;
+                case TestMethodIdentifierProperty m: methodId = m; break;
+                case StandardOutputProperty so: stdoutProp = so; break;
+                case StandardErrorProperty se: stderrProp = se; break;
+                case TestMetadataProperty meta:
+                    // Trait keys and values are test-controlled so we truncate them to
+                    // bound the size of the in-memory result list and generated XML.
+                    traits ??= [];
+                    traits.Add(new KeyValuePair<string, string>(
+                        Truncate(meta.Key, MaxTraitFieldLength)!,
+                        Truncate(meta.Value, MaxTraitFieldLength)!));
+                    break;
+            }
+        }
+
         TimeSpan duration = timing?.GlobalTiming.Duration ?? TimeSpan.Zero;
 
-        (string? className, string? methodName) = GetClassAndMethodName(node);
+        string? className = null;
+        string? methodName = null;
+        if (methodId is not null)
+        {
+            className = RoslynString.IsNullOrEmpty(methodId.Namespace)
+                ? methodId.TypeName
+                : $"{methodId.Namespace}.{methodId.TypeName}";
+            methodName = methodId.MethodName;
+        }
 
         string? errorMessage = state.Explanation;
         string? stackTrace = null;
@@ -70,24 +106,6 @@ internal static class TestResultCapture
             errorMessage ??= exception.Message;
             stackTrace = exception.StackTrace;
             exceptionType = exception.GetType().FullName;
-        }
-
-        string? stdout = node.Properties.SingleOrDefault<StandardOutputProperty>()?.StandardOutput;
-        string? stderr = node.Properties.SingleOrDefault<StandardErrorProperty>()?.StandardError;
-
-        // Collect traits without using LINQ to avoid an enumerator allocation per node.
-        // Trait keys and values are also test-controlled so we truncate them as well to
-        // bound the size of the in-memory result list and generated XML.
-        List<KeyValuePair<string, string>>? traits = null;
-        foreach (IProperty p in node.Properties)
-        {
-            if (p is TestMetadataProperty meta)
-            {
-                traits ??= [];
-                traits.Add(new KeyValuePair<string, string>(
-                    Truncate(meta.Key, MaxTraitFieldLength)!,
-                    Truncate(meta.Value, MaxTraitFieldLength)!));
-            }
         }
 
         return new CapturedTestResult
@@ -111,8 +129,8 @@ internal static class TestResultCapture
             ErrorMessage = Truncate(errorMessage, MaxMessageLength),
             ExceptionType = exceptionType,
             StackTrace = Truncate(stackTrace, MaxStackTraceLength),
-            StandardOutput = Truncate(stdout, MaxStandardStreamLength),
-            StandardError = Truncate(stderr, MaxStandardStreamLength),
+            StandardOutput = Truncate(stdoutProp?.StandardOutput, MaxStandardStreamLength),
+            StandardError = Truncate(stderrProp?.StandardError, MaxStandardStreamLength),
             Traits = traits,
         };
     }
@@ -136,21 +154,6 @@ internal static class TestResultCapture
                 => "failed",
             _ => throw ApplicationStateGuard.Unreachable(),
         };
-
-    private static (string? ClassName, string? MethodName) GetClassAndMethodName(TestNode node)
-    {
-        TestMethodIdentifierProperty? identifier = node.Properties.SingleOrDefault<TestMethodIdentifierProperty>();
-        if (identifier is null)
-        {
-            return (null, null);
-        }
-
-        string className = RoslynString.IsNullOrEmpty(identifier.Namespace)
-            ? identifier.TypeName
-            : $"{identifier.Namespace}.{identifier.TypeName}";
-
-        return (className, identifier.MethodName);
-    }
 
     internal static string? Truncate(string? value, int maxLength)
     {
