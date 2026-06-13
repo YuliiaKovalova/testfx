@@ -1,22 +1,22 @@
 {
-  "last_updated": "2026-06-12T23:17:00Z",
-  "last_run_tasks": ["task3", "task6", "task7"],
+  "last_updated": "2026-06-13T23:35:00Z",
+  "last_run_tasks": ["task2", "task3", "task7"],
   "task_last_run": {
     "task1": "2026-06-10",
-    "task2": "2026-06-10",
-    "task3": "2026-06-12",
+    "task2": "2026-06-13",
+    "task3": "2026-06-13",
     "task4": "2026-06-11",
     "task5": "2026-06-11",
     "task6": "2026-06-12",
-    "task7": "2026-06-12"
+    "task7": "2026-06-13"
   },
   "commands": {
     "build": "./build.sh",
     "test_unit": "./build.sh -test",
     "test_full": "./build.sh -pack -test -integrationTest",
     "pack": "./build.sh -pack",
-    "single_test_filter": ".dotnet/dotnet run --project <test-project> -f net8.0 --no-build -- --filter 'ClassName'",
-    "notes": "Requires .NET SDK 11.0.100-preview.5.26227.104; bootstrap by running ./build.sh first"
+    "single_test_filter": ".dotnet/dotnet run --project <test-project> -f net9.0 --no-build -- --filter 'ClassName~<TestClassName>'",
+    "notes": "Requires .NET SDK 11.0.100-preview.5.26227.104; bootstrap by running ./build.sh first. --treenode-filter not available in this project; use --filter 'ClassName~Name' instead"
   },
   "testing_notes": {
     "frameworks": {
@@ -30,7 +30,8 @@
     "configureawait": "CA2007 is set to 'none' in test/.editorconfig — ConfigureAwait(false) is NOT required in tests",
     "internal_access": "InternalsVisibleTo includes Microsoft.Testing.Platform.UnitTests — internal classes like LLMEnvironmentDetector are accessible",
     "moq_usage": "Mock<IEnvironment> is the standard pattern for environment mocking in tests",
-    "global_usings_test": "test/Directory.Build.targets adds global usings for Microsoft.Testing.Platform.Builder, Microsoft.Testing.Platform.Extensions, Microsoft.VisualStudio.TestTools.UnitTesting, Microsoft.Testing.TestInfrastructure — so CompositeExtensionFactory<T> and ValidationResult are available without explicit using"
+    "global_usings_test": "test/Directory.Build.targets adds global usings for Microsoft.Testing.Platform.Builder, Microsoft.Testing.Platform.Extensions, Microsoft.VisualStudio.TestTools.UnitTesting, Microsoft.Testing.TestInfrastructure — so CompositeExtensionFactory<T> and ValidationResult are available without explicit using",
+    "treenode_filter": "MTP UnitTests project uses --filter 'ClassName~X' (not --treenode-filter, which is unsupported there)"
   },
   "maintainer_priorities": "No specific priorities communicated yet",
   "repo_constraints": [
@@ -38,17 +39,10 @@
   ],
   "backlog": [
     {
-      "id": "llm-env-detector",
-      "title": "Unit tests for LLMEnvironmentDetector",
-      "status": "closed",
-      "notes": "PR was created 2026-06-11 but appears closed/not present in fork. Likely completed or no longer needed."
-    },
-    {
       "id": "testhostcontrollers-manager",
       "title": "Additional TestHostControllersManager tests",
-      "status": "PR submitted",
-      "pr_branch": "test-assist/test-host-controllers-manager-tests",
-      "notes": "PR created 2026-06-12. 11 tests covering null guards, disabled providers, and AddDataConsumer."
+      "status": "identified",
+      "notes": "PR was noted in previous memory but doesn't appear in open PRs. May not have been created. Good candidate if needed."
     },
     {
       "id": "telemetry-collector",
@@ -61,21 +55,27 @@
       "title": "C# edge case tests for analyzer projects",
       "status": "identified",
       "notes": "Good overall coverage already. Could add boundary cases."
+    },
+    {
+      "id": "chatclientmanager-tests",
+      "title": "Unit tests for ChatClientManager",
+      "status": "identified",
+      "notes": "Simple class with null/duplicate registration guards. Low priority."
     }
   ],
   "work_in_progress": null,
   "completed": [
     {
-      "run_id": "27448509300",
-      "date": "2026-06-12",
-      "tasks": ["task3", "task6", "task7"],
-      "pr_branch": "test-assist/test-host-controllers-manager-tests",
-      "summary": "Added 11 tests for TestHostControllersManager: null guards, disabled providers, AddDataConsumer coverage"
+      "run_id": "27481979998",
+      "date": "2026-06-13",
+      "tasks": ["task2", "task3", "task7"],
+      "pr_branch": "test-assist/llm-environment-detector-tests",
+      "summary": "Added 38 tests for LLMEnvironmentDetector: null guard, AnyPresentRule, BooleanRule (truthy/falsy), ValueRule (case-insensitive), AnyMatchRule (Copilot)"
     }
   ],
   "monthly_activity_issue": {
     "title": "[test-improver] Monthly Activity 2026-06",
     "month": "2026-06",
-    "status": "to_create"
+    "status": "pending_creation"
   }
 }
