@@ -6,6 +6,7 @@
       Indicate to other targets that MSTest.Sdk is being used.
     -->
     <UsingMSTestSdk>true</UsingMSTestSdk>
+    <IsTestProject Condition=" '$(IsTestProject)' == '' ">true</IsTestProject>
   </PropertyGroup>
 
   <!--
@@ -35,6 +36,11 @@
 
   <!-- Implicit top import -->
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" Condition=" '$(_MSTestSdkImportsMicrosoftNETSdk)' == 'true' " />
+
+  <ItemGroup Condition=" '$(IsTestProject)' == 'true' ">
+    <!-- Compatibility capability for project-system consumers that do not read IsTestProject yet. -->
+    <ProjectCapability Include="TestContainer" />
+  </ItemGroup>
 
   <PropertyGroup>
     <EnableAspireTesting Condition=" '$(EnableAspireTesting)' == '' ">false</EnableAspireTesting>
